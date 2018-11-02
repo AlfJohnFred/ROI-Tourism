@@ -1,0 +1,3 @@
+"0","reqCol <- c('Series','Attribute','AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK', 'SVN', 'ESP', 'SWE', 'GBR')"
+"0","prelimData <- init.data[,reqCol]"
+"0","prelimData"
