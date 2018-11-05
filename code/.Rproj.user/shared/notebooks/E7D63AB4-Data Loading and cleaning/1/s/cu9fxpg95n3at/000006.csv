@@ -1,2 +1,0 @@
-"0","init.data<- data.frame(read.csv(""../data/WEF_TTCR17_data_for_download.csv""))"
-"0","as_tibble(init.data)"

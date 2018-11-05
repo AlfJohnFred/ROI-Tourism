@@ -7,6 +7,7 @@ The packages of tidyverse help imensely with data cleaning and initial visualiza
 
 ```{r}
 library("tidyverse")
+library(readxl)
 ```
 
 We now extract and use the dataset from our sources.
@@ -32,5 +33,21 @@ We then create a column vector with the relevant columns needed and subset the d
 reqCol <- c('Series','Attribute','AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK', 'SVN', 'ESP', 'SWE', 'GBR')
 prelimData <- init.data[,reqCol]
 prelimData
+```
+
+```{r}
+WECTTCI17 <- filter(prelimData,Attribute == 'Value')
+WECTTCI17
+```
+
+```{r}
+WECTTCI17 <- select(WECTTCI17,-(Attribute))
+WECTTCI17
+```
+
+```{r}
+Statista <- read_excel("../data/statistic_id314340_leading-european-city-tourism-destinations-in-2017-by-number-of-bednights.xlsx",sheet = "Data",skip=4)
+names(Statista) <- c('City','Count')
+Statista
 ```
 

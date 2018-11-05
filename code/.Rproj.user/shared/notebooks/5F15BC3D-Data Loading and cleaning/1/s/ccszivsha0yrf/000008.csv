@@ -1,0 +1,3 @@
+"0","Statista <- read_excel(""../data/statistic_id314340_leading-european-city-tourism-destinations-in-2017-by-number-of-bednights.xlsx"",sheet = ""Data"",skip=4)"
+"0","names(Statista) <- c('City','Count')"
+"0","Statista"
