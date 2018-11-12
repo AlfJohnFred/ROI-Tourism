@@ -51,3 +51,9 @@ names(Statista) <- c('City','Count')
 Statista
 ```
 
+automated loading of datasets from eurostat to ensure up to date data on Eu residents as updated by the primary source of data collection from the EU
+```{r}
+dat2 <- get_eurostat("tour_dem_extot", filters = list(geo = c("AT", "FI","BE","BG","CH","CY"), sinceTimePeriod=2012,purpose="TOTAL",precision=1,duration="N_GE1",unit="THS_EUR",partner="DOM"), time_format = "num")
+kable(dat2)
+```
+
