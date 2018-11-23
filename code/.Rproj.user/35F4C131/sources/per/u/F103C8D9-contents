@@ -1,5 +1,0 @@
-library("tidyverse")
-test <- data.frame(read.csv("../data/WEF_TTCR17_data_for_download.csv"))
-class(test)
-test
-test <- as_tibble(test)

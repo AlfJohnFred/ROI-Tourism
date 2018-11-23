@@ -1,0 +1,166 @@
+---
+title: "Data loading and Cleaning"
+output: html_notebook
+---
+
+The packages of tidyverse help imensely with data cleaning and initial visualization.
+The eurostat package helps parse the open JSON api of eurostat databases.
+```{r}
+library("tidyverse")
+library("eurostat")
+library(readxl)
+```
+
+We now extract and use the dataset from our sources.
+first the biggest and messiest dataset!
+
+```{r}
+init.data<- data.frame(read.csv("../data/WEF_TTCR17_data_for_download.csv"))
+as_tibble(init.data)
+init.data
+```
+
+We can see that this is now viewable as a dataframe . We immediately see that there are a lot of columns and values that we just arent interested in. The analysis will entail tourism spending and other characteristics pertaining to 28 the EU member states.
+First order would be filter out only the relevant 28 states.
+```{r}
+colnames(init.data) <- as.character(unlist(init.data[1,]))
+init.data
+```
+
+To achieve our goal we first convert the header to meaningful data. 
+We then create a column vector with the relevant columns needed and subset the data to get relevant fields for our 28 member states.
+
+```{r}
+reqCol <- c('Series','Attribute','AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK', 'SVN','TUR', 'ESP', 'SWE', 'GBR')
+prelimData <- init.data[,reqCol]
+prelimData
+```
+
+```{r}
+WECTTCI17 <- filter(prelimData,Attribute == 'Value')
+WECTTCI17
+```
+
+```{r}
+WECTTCI17 <- select(WECTTCI17,-(Attribute))
+WECTTCI17$Series <- gsub(",","",WECTTCI17$Series)
+WECTTCI17 <- WECTTCI17[-c(8),]
+WECTTCI17 <- t(WECTTCI17)
+WECTTCI17 <-as.data.frame(WECTTCI17)
+col <- c(6,25,27:31,38,41,43,50,52,53,55,56,80:90)
+WECTTCI17 <- select(WECTTCI17,col)
+colnames(WECTTCI17) <- as.character(unlist(WECTTCI17[1,]))
+WECTTCI17$year <-  c(2017)
+WECTTCI17 <- WECTTCI17[c(27,1:26)]
+WECTTCI17 <- WECTTCI17[,-c(9)]
+WECTTCI17 <- WECTTCI17[-c(1),]
+write.csv(WECTTCI17,file = "interimWec.csv",row.names = TRUE)
+WECTTCI17 <- read.csv("interimWec.csv")
+colnames(WECTTCI17) <- c("country","year","gdp_share","terrorism_cost","homicides","physician","improved_sanitation","improved_water","hospital","pay","ict","electricity","tourism_spent","marketing_effectivenes","open_data","brand_rating","roads","railroad","port","ground_transport","railroad_density","hotel_rooms","tourism_infra","car_rental","atm","heritage_sites","species")
+write.csv(WECTTCI17,file = "WECTTCI.csv",row.names = FALSE)
+WECTTCI17
+```
+
+```{r}
+Statista <- read_excel("../data/statistic_id314340_leading-european-city-tourism-destinations-in-2017-by-number-of-bednights.xlsx",sheet = "Data",skip=4)
+names(Statista) <- c('City','Count')
+Statista$CountryTwo <- c("GB","FR","DE","IT","ES","ES","CZ","TR","AT","DE","NL","SE","DE","IT","PT")
+Statista$CountryThree <- c("GBR","FRA","DEU","ITA","ESP","ESP","CZE","TUR","AUT","DEU","NLD","SWE","DEU","ITA","PRT")
+Statista <- Statista[c(4,3,1,2)]
+write.csv(Statista,file = "Statista.csv")
+Statista
+```
+
+automated loading of datasets from eurostat to ensure up to date data on Eu residents as updated by the primary source of data collection from the EU
+
+1. Total footfalls in EU.
+```{r}
+eutwoletter <- c("AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE","GB")
+byFootfall<- get_eurostat("tour_dem_extot", filters = list(nongeo=1,geo = eutwoletter,sinceTimePeriod=2012,purpose="TOTAL",precision=1,duration="N_GE1",unit="THS_EUR",partner="DOM"), time_format = "num")
+byFootfall <- select(byFootfall,geo:values)
+byFootfall
+```
+This data needs to cleaned and transformed into the right structure. The composite primary key we will year and geo.
+```{r}
+year <- unique(byFootfall$time)
+geo <- unique(byFootfall$geo)
+
+geo <- as.character(geo)
+footfall <- c()
+
+for (i in 1:length(geo)) {
+  for (j in 1:length(year)) {
+    test <- filter(byFootfall,geo==geo[i],year==year[j])%>% select(values)
+    row <- c(year[j],geo[i],unlist(test,recursive = TRUE,use.names = FALSE))
+    footfall <- rbind(footfall,row)
+    
+  }
+}
+
+colnames(footfall) <- c("Year","Geo","Footfall_in_mil")
+write.csv(footfall,file = "Footfall.csv",row.names = FALSE)
+footfall <- read.csv("Footfall.csv")
+footfall
+```
+
+```{r}
+byAge<- get_eurostat("tour_dem_toage", filters = list(nongeo=1,geo = eutwoletter,sinceTimePeriod=2012,purpose="TOTAL",precision=1,duration="N_GE1",unit="NR",partner="DOM",age=c("Y15-24","Y25-34","Y35-44","Y45-64","Y_GE65")), time_format = "num")
+byAge <- select(byAge,age:values)
+byAge
+```
+We will need to transform this data into a usabe format.
+
+```{r}
+ageFactor <- unique(byAge$age)
+year <- unique(byAge$time)
+geo <- unique(byAge$geo)
+
+geo <- as.character(geo)
+age <- c()
+
+for (i in 1:length(geo)) {
+  for (j in 1:length(year)) {
+    test <- filter(byAge,geo==geo[i],year==year[j])%>% select(values)
+    row <- c(year[j],geo[i],unlist(test,recursive = TRUE,use.names = FALSE))
+    age <- rbind(age,row)
+    
+  }
+}
+colnames(age) <- c("Year","Geo","Y15-24","Y25-34","Y35-44","Y45-64","Y_GE65")
+write.csv(age,file = "Age.csv",row.names = FALSE)
+age <- read.csv("Age.csv")
+age
+```
+
+
+
+
+```{r}
+bySex <- get_eurostat("tour_dem_tosex", filters = list(nongeo=1,geo = eutwoletter,sinceTimePeriod=2012,precision=1,duration="N_GE1",unit="NR",partner="DOM",sex=c("M","F")), time_format = "num")
+bySex <- select(bySex,sex:values)
+bySex
+```
+
+This datframe also has to be transformed with geo and time to be the composite primary key
+```{r}
+sexFactor <- unique(bySex$sex)
+year <- unique(bySex$time)
+geo <- unique(bySex$geo)
+
+geo <- as.character(geo)
+sex <- c()
+
+for (i in 1:length(geo)) {
+  for (j in 1:length(year)) {
+    test <- filter(bySex,geo==geo[i],year==year[j])%>% select(values)
+    row <- c(year[j],geo[i],unlist(test,recursive = TRUE,use.names = FALSE))
+    sex <- rbind(sex,row)
+    
+  }
+}
+colnames(sex) <- c("Year","Geo","F","M")
+write.csv(sex,file = "Sex.csv",row.names = FALSE)
+Sex <- read.csv("Sex.csv")
+Sex
+```
+

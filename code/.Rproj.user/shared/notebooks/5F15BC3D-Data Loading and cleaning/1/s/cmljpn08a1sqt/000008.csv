@@ -1,0 +1,4 @@
+"0","eutwoletter <- c(""AT"",""BE"",""BG"",""HR"",""CY"",""CZ"",""DK"",""EE"",""FI"",""FR"",""DE"",""GR"",""HU"",""IE"",""IT"",""LV"",""LT"",""LU"",""MT"",""NL"",""PL"",""PT"",""RO"",""SK"",""SI"",""ES"",""SE"",""GB"")"
+"0","byFootfall<- get_eurostat(""tour_dem_extot"", filters = list(nongeo=1,geo = eutwoletter,sinceTimePeriod=2012,purpose=""TOTAL"",precision=1,duration=""N_GE1"",unit=""THS_EUR"",partner=""DOM""), time_format = ""num"")"
+"0","byFootfall <- select(footfall,geo:values)"
+"0","byFootfall"
